@@ -31,8 +31,7 @@ def read_graph_from_file(filename):
 
 def remove_cycles_dfs(G):
     """
-    使用深度优先搜索（DFS）移除图中的所有环，返回一个有向无环图（DAG）。
-    同时记录需要连接的前驱和后继节点。
+    Use Depth-First Search (DFS) to remove all cycles from the graph and return a Directed Acyclic Graph (DAG). At the same time, record the predecessors and successors that need to be connected.
     """
     visited = set()
     stack = set()
@@ -71,7 +70,7 @@ def remove_cycles_dfs(G):
 
 def connect_without_cycles(G, predecessors, successors):
     """
-    将环的前驱节点连接到后继节点，确保不引入新的环。
+    Connect the predecessor nodes of cycles to successor nodes, ensuring that no new cycles are introduced.
     """
     # 获取拓扑排序
     topo_order = list(nx.topological_sort(G))
@@ -91,7 +90,7 @@ def connect_without_cycles(G, predecessors, successors):
 
 def compute_traces(G, nodes=None):
     """
-    计算图中节点的 trace 值，如果提供了 nodes 列表，则只计算这些节点的 trace。
+    Calculate the trace values of the nodes in the graph. If a list of nodes is provided, only calculate the trace for those nodes.
     """
     if nodes is None:
         nodes = list(G.nodes())
@@ -104,7 +103,7 @@ def compute_traces(G, nodes=None):
         if node not in nodes:
             continue
 
-        # 如果是复制节点，找到原本节点
+        # If it is a replica node, find the original node.
         start_time = time.perf_counter()
         vo_elements = []
         if "_replica" in str(node):
@@ -112,12 +111,12 @@ def compute_traces(G, nodes=None):
             trace_map[node] = trace_map.get(original_node, hash_data(original_node))
         else:
             if G.in_degree(node) == 0:
-                # 如果是起始节点，直接计算 hash 并记录 VO
+                # If it is a starting node, directly compute the hash and record the VO.
                 hash_value = hash_data(node)
                 trace_map[node] = hash_value
                 vo_elements.append(hash_value)  # 起始节点的 hash 作为 VO
             else:
-                # 否则，计算前驱节点的 trace
+                # Otherwise, compute the trace of the predecessor nodes.
                 direct_precursors = list(G.predecessors(node))
                 precursor_traces = [trace_map[precursor] for precursor in direct_precursors]
                 trace_map[node] = hash_combine(precursor_traces)
@@ -139,7 +138,7 @@ def compute_traces(G, nodes=None):
 
 def get_all_successors(G, node, memo=None):
     """
-    获取当前节点的所有后驱节点，包括直接和间接的，使用缓存优化。
+    get data all successors for compute track
     """
     if memo is None:
         memo = {}
@@ -157,7 +156,7 @@ def get_all_successors(G, node, memo=None):
 
 def compute_tracks(G, subgraphs, subgraph_nodes=None):
     """
-    优化后的 compute_tracks 函数，使用缓存和高效的数据结构来提高性能。
+    compute backward tracks
     """
     import time
     import sys
@@ -268,8 +267,8 @@ def compute_tracks(G, subgraphs, subgraph_nodes=None):
 
 def trivial_scheme(G):
     """
-    计算每个节点的 trace 和 track，同时返回 VO 的大小。
-    VO trace 包括链上所有前驱节点的 hash 值，track 包括链上所有后继节点的 hash 值。
+    Calculate the trace and track for each node, while also returning the size of the VO.
+
     """
     topo_sort = list(nx.topological_sort(G))
     trace_map = {}
@@ -561,7 +560,7 @@ def smpt_prove(smpt_results, subgraph_index, id, element):
         proof, vo_mpt = mpt.get_proof(id.encode())
     except KeyError as e:
         # 如果 MPT 中找不到键，则打印错误信息并跳过此项
-        print(f"KeyError: {e} - ID: {id} 不在 MPT 中")
+        print(f"KeyError: {e} - ID: {id} not in MPT")
         return False
 
     # 验证 MPT 证明
@@ -569,7 +568,7 @@ def smpt_prove(smpt_results, subgraph_index, id, element):
 
     if not is_valid:
         # 如果 MPT 证明无效，打印错误信息并跳过此项
-        print(f"ID {id} 不在 MPT 中，验证失败")
+        print(f"ID {id} not in MPT 中, verify falls")
         return False
 
     # Step 2: 验证 SMT 中是否包含 element
@@ -582,7 +581,7 @@ def smpt_prove(smpt_results, subgraph_index, id, element):
         index = mt.leaves.index(mt.hash_function(element.encode('utf-8')).digest())
     except ValueError:
         # 如果找不到该元素，捕获 ValueError 异常并跳过此项
-        print(f"Element {element} 在 SMT 中不存在")
+        print(f"Element {element} not in smt")
         return False
 
     # 生成 SMT 证明
@@ -590,7 +589,7 @@ def smpt_prove(smpt_results, subgraph_index, id, element):
 
     # 验证 SMT 证明
     if not mt.validate_proof(smt_proof, mt._to_hex(mt.leaves[index]), mt_root):
-        print(f"Element {element} 号位元素在 ID {id} 的 SMT 中的证明验证失败")
+        print(f"Element {element} with ID {id} verify fall")
         return False
 
     # 验证通过，返回合并的 VO
@@ -600,7 +599,7 @@ def smpt_prove(smpt_results, subgraph_index, id, element):
 
 def find_active_nodes(G, k):
     """
-    查找图中所有活跃节点，出度大于 k 的节点。
+    find node out-degree>k 。
     """
     active_nodes = []
 
@@ -613,7 +612,7 @@ def find_active_nodes(G, k):
 
 def create_single_replica(G, active_nodes):
     """
-    为每个活跃节点创建一个复制节点，并将复制节点加入原图中。
+    copy active data and add to the graph
     """
     replica_mapping = {}  # 用于存储每个节点的复制节点映射
 
@@ -631,9 +630,6 @@ def create_single_replica(G, active_nodes):
 
 
 def redirect_edges_to_single_replica(G, active_nodes, replica_mapping):
-    """
-    将活跃节点的边重定向到其唯一的复制节点。
-    """
     for node in active_nodes:
         # 获取对应的复制节点
         replica_node = replica_mapping[node]
@@ -648,9 +644,7 @@ def redirect_edges_to_single_replica(G, active_nodes, replica_mapping):
 
 
 def trace_from_active_data(G, node, replica_mapping):
-    """
-    在追溯过程中，如果遇到活跃节点，直接从其最新复制节点开始追溯。
-    """
+
     # 判断当前节点是否是活跃节点
     if node in replica_mapping:
         # 如果是活跃节点，使用其最新的复制节点
@@ -692,7 +686,6 @@ def update_active_nodes(G, active_nodes, replica_arrays):
 def main(filename):
     G = read_graph_from_file(filename)
     G, predecessors, successors = remove_cycles_dfs(G)
-    # 连接前驱和后继节点，确保不引入新的环
     G = connect_without_cycles(G, predecessors, successors)
     print(1)
     trivial_trace, trivial_track, time_tri_trace, time_tri_track,vo_triTrace,vo_tritrack = trivial_scheme(G)
@@ -747,7 +740,7 @@ def main(filename):
                 elapsed_us = (end_time - start_time) * 1_000_000
                 time_set[key] += elapsed_us
 
-    # 汇总时间统计
+    # total time
     time_track_total = {}
     for key in time_set:
         time_track_total[key] = time_set[key]
@@ -758,7 +751,7 @@ def main(filename):
         else:
             time_track_total[key] = time_track[key]
 
-    # 汇总 VO 数据
+    # total vo
     vo_track_total = {}
     for key in vo_smpt:
         vo_track_total[key] = vo_smpt[key]
@@ -769,7 +762,6 @@ def main(filename):
         else:
             vo_track_total[key] = vo_track[key]
 
-    # 将结果转换为字符串类型
     time_trace = {str(k): v for k, v in time_trace.items()}
     time_track_total = {str(k): v for k, v in time_track_total.items()}
     time_tri_trace = {str(k): v for k, v in time_tri_trace.items()}
